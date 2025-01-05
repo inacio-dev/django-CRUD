@@ -1,0 +1,49 @@
+# Django Core
+django>=5.0.7
+django-simple-history>=3.7.0 # History models
+django-stubs>=5.0.2
+django-filter>=23.5
+django-cors-headers>=4.3.1
+django-extensions>=3.2.3
+djangorestframework>=3.14.0
+psycopg2-binary>=2.9.9
+gunicorn>=22.0.0
+whitenoise>=6.6.0
+python-decouple>=3.8 # Environments
+drf-yasg>=1.20.0 # Swagger
+
+# SSL
+pyOpenSSL>=24.3.0
+Werkzeug>=3.1.3
+
+# Python lint and formating
+flake8>=7.1.0
+black>=24.4.2
+
+# Celery
+celery>=5.3.6
+celery[redis]>=5.3.6
+flower>=2.0.1
+psutil>=6.0.0
+kombu>=5.3.7
+
+# Auth
+djangorestframework-simplejwt>=5.3.1
+djangorestframework-simplejwt[token_blacklist]>=5.3.1
+pyjwt>=2.8.0
+
+# Rest
+requests>=2.31.0
+pillow>=10.4.0
+
+# Email
+premailer>=3.10.0
+sendgrid>=6.11.0
+
+# Redis Cache
+redis>=5.0.7
+django-redis>=5.4.0
+
+# Bucket storage
+django-storages>=1.14.4
+boto3>=1.35.19

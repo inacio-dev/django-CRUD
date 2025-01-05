@@ -1,0 +1,133 @@
+services:
+  db:
+    container_name: db
+    image: postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - crud
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    networks:
+      - crud
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    container_name: redis
+    image: redis:alpine
+    networks:
+      - crud
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  flower:
+    container_name: flower
+    image: mher/flower
+    networks:
+      - crud
+    ports:
+      - "5555:5555"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: rpc://
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  test:
+    container_name: test
+    build:
+      context: .
+    command: bash -c "./entrypoint.sh"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./media:/app/media
+      - ./logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - crud
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bash -c "python manage.py runserver_plus 0.0.0.0:8000 --cert-file ssl/cert.pem --key-file ssl/key.pem"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./media:/app/media
+      - ./logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8000:8000"
+    networks:
+      - crud
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k -f https://localhost:8000/health/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      test:
+        condition: service_completed_successfully
+
+  celery:
+    container_name: celery
+    build:
+      context: .
+    command: bash -c "celery -A api worker --loglevel=info -Q api_processing -Ofair"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./media:/app/media
+      - ./logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - crud
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A api inspect ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      test:
+        condition: service_completed_successfully
+
+networks:
+  crud:
+    external: true

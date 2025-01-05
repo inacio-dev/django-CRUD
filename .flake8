@@ -1,0 +1,21 @@
+[flake8]
+exclude = 
+    migrations,
+    settings.py,
+    __pycache__,
+    .venv,
+    .venv.dev,
+    .git,
+    .tox,
+    build,
+    staticfiles,
+    logs,
+    dist
+max-line-length = 120
+ignore = E203,E402,E501,W503,W504
+enable-extensions = G
+select = E,W,F,C,N
+max-complexity = 25
+application-import-names = django
+per-file-ignores = 
+    __init__.py: F401,F403
